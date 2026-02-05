@@ -698,8 +698,6 @@ await new Promise<void>((resolve, reject) => {
 const child = spawn("node", [affScript, "log", type, reason], { stdio: "ignore" });
 child.on("error", reject);
 child.on("exit", (code) => (code === 0 ? resolve() : reject(new Error(`aff_log exit ${code}`))));
-});
-};
 
 try {
 if (sub === "" || sub === "status") {
