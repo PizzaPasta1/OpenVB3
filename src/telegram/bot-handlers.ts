@@ -1045,6 +1045,7 @@ if (msg.sticker && !media && !hasText) {
       const debounceKey = senderId
         ? `telegram:${accountId ?? "default"}:${conversationKey}:${senderId}`
         : null;
+          try {
       await inboundDebouncer.enqueue({
         ctx,
         msg,
