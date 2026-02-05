@@ -1056,6 +1056,4 @@ if (msg.sticker && !media && !hasText) {
       });
     } catch (err) {
       runtime.error?.(danger(`handler failed: ${String(err)}`));
-    }
-  });
-};
+    });
