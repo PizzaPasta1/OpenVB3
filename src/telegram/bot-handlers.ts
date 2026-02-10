@@ -672,12 +672,21 @@ export const registerTelegramHandlers = ({
             process.env.OPENCLAW_WORKSPACE ??
             "/home/node/.openclaw/workspace";
 
-          const { formatAffStatus, loadOrInitState, note, reset, sorry } = await import(
-            "../affection/v3b-engine.js"
-          );
+          const {
+            formatAffStatus,
+            loadOrInitState,
+            loadStylePrefs,
+            note,
+            reset,
+            resolveAddressName,
+            saveStylePrefs,
+            sorry,
+          } = await import("../affection/v3b-engine.js");
 
           const bossId = String(process.env.OPENCLAW_BOSS_TELEGRAM_USER_ID ?? "8068585788");
           const senderId = msg.from?.id != null ? String(msg.from.id) : "";
+
+          const prefs = await loadStylePrefs(ws);
 
           if (sub === "debug") {
             const state = await loadOrInitState(ws);
@@ -687,7 +696,8 @@ export const registerTelegramHandlers = ({
 
           if (sub === "sorry") {
             const state = await sorry(ws, `telegram:${senderId}`);
-            await ctx.reply("ok. (self-repair applied)\n\n" + formatAffStatus(state));
+            const addressName = resolveAddressName(state, prefs);
+            await ctx.reply("ok. (self-repair applied)\n\n" + formatAffStatus(state, { addressName }));
             return;
           }
 
@@ -698,7 +708,34 @@ export const registerTelegramHandlers = ({
               return;
             }
             const state = await note(ws, reason);
-            await ctx.reply("noted.\n\n" + formatAffStatus(state));
+            const addressName = resolveAddressName(state, prefs);
+            await ctx.reply("noted.\n\n" + formatAffStatus(state, { addressName }));
+            return;
+          }
+
+          if (sub === "style") {
+            if (!senderId || senderId !== bossId) {
+              await ctx.reply("no. (boss-only)");
+              return;
+            }
+            const args = t.split(/\s+/).slice(2);
+            const mode = (args[0] ?? "").toLowerCase();
+            if (mode === "auto") {
+              await saveStylePrefs(ws, { mode: "auto" });
+              await ctx.reply("style: auto");
+              return;
+            }
+            if (mode === "fixed") {
+              const name = args.slice(1).join(" ").trim();
+              if (!name) {
+                await ctx.reply("Usage: /aff style fixed <name>");
+                return;
+              }
+              await saveStylePrefs(ws, { mode: "fixed", name });
+              await ctx.reply(`style: fixed (${name})`);
+              return;
+            }
+            await ctx.reply("Usage: /aff style auto | /aff style fixed <name>");
             return;
           }
 
@@ -708,12 +745,14 @@ export const registerTelegramHandlers = ({
               return;
             }
             const state = await reset(ws, `telegram:${senderId}`);
-            await ctx.reply("reset.\n\n" + formatAffStatus(state));
+            const addressName = resolveAddressName(state, prefs);
+            await ctx.reply("reset.\n\n" + formatAffStatus(state, { addressName }));
             return;
           }
 
           const state = await loadOrInitState(ws);
-          await ctx.reply(formatAffStatus(state));
+          const addressName = resolveAddressName(state, prefs);
+          await ctx.reply(formatAffStatus(state, { addressName }));
           return;
         }
       } catch (e: any) {

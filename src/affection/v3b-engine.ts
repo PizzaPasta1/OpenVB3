@@ -212,10 +212,45 @@ export async function reset(workspace: string, note?: string) {
   return state;
 }
 
-export function formatAffStatus(state: AffectionStateV3b) {
+export type AffectionStylePrefs =
+  | { mode: "auto" }
+  | { mode: "fixed"; name: string };
+
+export async function loadStylePrefs(workspace: string): Promise<AffectionStylePrefs> {
+  const { dir } = resolveAffectionPaths(workspace);
+  const prefsPath = path.join(dir, "prefs.json");
+  try {
+    const raw = await fs.promises.readFile(prefsPath, "utf8");
+    const parsed = JSON.parse(raw) as Partial<AffectionStylePrefs>;
+    if (parsed && parsed.mode === "fixed" && typeof (parsed as any).name === "string") {
+      return { mode: "fixed", name: String((parsed as any).name) };
+    }
+    return { mode: "auto" };
+  } catch {
+    return { mode: "auto" };
+  }
+}
+
+export async function saveStylePrefs(workspace: string, prefs: AffectionStylePrefs) {
+  const { dir } = resolveAffectionPaths(workspace);
+  const prefsPath = path.join(dir, "prefs.json");
+  await fs.promises.mkdir(dir, { recursive: true });
+  await fs.promises.writeFile(prefsPath, JSON.stringify(prefs, null, 2), "utf8");
+}
+
+export function resolveAddressName(state: AffectionStateV3b, prefs: AffectionStylePrefs) {
+  if (prefs.mode === "fixed") return prefs.name;
+  // auto: keep Boss at low/neutral; drift to name at higher warmth
+  if (state.label === "LOVE" || state.label === "ENAMORED") return "Anthony";
+  if (state.label === "AFFECTIONATE") return "Boss";
+  return "Boss";
+}
+
+export function formatAffStatus(state: AffectionStateV3b, opts?: { addressName?: string }) {
   const temp = 1 - clamp01(state.irritation);
+  const address = opts?.addressName ? ` (${opts.addressName})` : "";
   return (
-    `Affection (V3b — deterministic)\n\n` +
+    `Affection (V3b — deterministic)${address}\n\n` +
     `- label: ${state.label} | aff: ${state.aff}\n` +
     `- closeness: ${state.closeness.toFixed(3)}\n` +
     `- trust: ${state.trust.toFixed(3)}\n` +
