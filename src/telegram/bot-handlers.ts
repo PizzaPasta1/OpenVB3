@@ -684,9 +684,37 @@ export const registerTelegramHandlers = ({
 
           const prefs = await loadStylePrefs(ws);
 
+          const debugArgs = t.split(/\s+/).slice(2);
+
           if (sub === "debug") {
+            if (!senderId || senderId !== bossId) {
+              await ctx.reply("no. (boss-only)");
+              return;
+            }
+
             const state = await loadOrInitState(ws);
-            await ctx.reply(JSON.stringify(state, null, 2));
+            const addressName = resolveAddressName(state, prefs);
+
+            const wantJson = (debugArgs[0] ?? "").toLowerCase() === "json";
+            if (wantJson) {
+              await ctx.reply(JSON.stringify(state, null, 2));
+              return;
+            }
+
+            const presenceState = state.presence?.state ?? "ACTIVE";
+            const brbEta = state.presence?.brbExpectedReturnAt ? ` (eta ${state.presence.brbExpectedReturnAt})` : "";
+            const cooldown = state.cooldownUntil ? `cooldown until ${state.cooldownUntil}` : "no cooldown";
+
+            const lines = [
+              `${addressName} — aff ${state.aff} (${state.label})`,
+              `closeness ${state.closeness.toFixed(3)} · trust ${state.trust.toFixed(3)} · reliability ${state.reliabilityTrust.toFixed(3)} · irritation ${state.irritation.toFixed(3)}`,
+              `today +${state.today?.affGain ?? 0} · negBudgetUsed ${state.today?.negBudgetUsed ?? 0} · ${cooldown}`,
+              `presence ${presenceState}${brbEta}`,
+              `last msg ${state.lastMessageAt ?? "?"}`,
+              "(tip: /aff debug json for raw state)",
+            ];
+
+            await ctx.reply(lines.join("\n"));
             return;
           }
 
