@@ -842,17 +842,17 @@ try {
               }
 
               const matches = detectTriggers({ text });
-if (matches.length) {
-  const match = matches[0];
-  await applyAffectionTrigger({
-    workspace: ws,
-    match,
-    sourceId: "telegram:" + String(msg.message_id),
-  });
+              if (matches.length) {
+                const match = matches[0];
 
-  // nudge-only: no immediate reply here.
-}
+                await applyAffectionTrigger({
+                  workspace: ws,
+                  match,
+                  sourceId: "telegram:" + String(msg.message_id),
+                });
 
+                // nudge-only: no immediate reply here.
+              }
             }
           }
         }
