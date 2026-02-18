@@ -798,7 +798,6 @@ try {
 } catch {
   // ignore
 }
-
       // openVB3: passive affection triggers (DM-only, Boss-only for tuning)
       try {
         const isPrivate = msg.chat.type === "private";
@@ -819,7 +818,6 @@ try {
               const { loadOrInitState, saveState, appendAudit } = await import("../affection/v3b-engine.js");
               const { renderTriggerReply } = await import("../affection/replies.js");
 
-              // Milestone 2: BRB/back presence (no scoring). If present command hits, we reply once and stop.
               const presenceCmd = detectPresenceCommand({ text });
               if (presenceCmd.kind === "set") {
                 const state = await loadOrInitState(ws);
@@ -829,16 +827,16 @@ try {
                 await appendAudit(ws, {
                   ts: new Date().toISOString(),
                   action: "touch",
-                  note: presence:,
-                  meta: { sourceId: `telegram:${msg.message_id}` },
+                  note: "presence:" + String(before ?? "?") + "->" + String(state.presence.state),
+                  meta: { sourceId: "telegram:" + String(msg.message_id) },
                 });
 
                 if (state.presence.state === "BRB") {
-                  await ctx.reply("ok. ill be here when youre back.");
+                  await ctx.reply("ok. i'll be here when you're back.");
                 } else if (state.presence.state === "ACTIVE") {
                   await ctx.reply("welcome back.");
                 } else {
-                  await ctx.reply("got it. ill keep it low-noise.");
+                  await ctx.reply("got it. i'll keep it low-noise.");
                 }
                 return;
               }
@@ -846,18 +844,19 @@ try {
               const matches = detectTriggers({ text });
               if (matches.length) {
                 const match = matches[0];
+
                 await applyAffectionTrigger({
                   workspace: ws,
                   match,
-                  sourceId: `telegram:${msg.message_id}`,
+                  sourceId: "telegram:" + String(msg.message_id),
                 });
 
                 const state = await loadOrInitState(ws);
-                const reply = renderTriggerReply({
+		const reply = renderTriggerReply({
                   kind: match.kind,
                   phrase: match.phrase,
                   state,
-                  seed: ${msg.date}:,
+                  seed: String(msg.date) + ":" + String(msg.message_id),
                 });
 
                 await ctx.reply(reply);
@@ -868,9 +867,9 @@ try {
       } catch {
         // ignore trigger system failures
       }
-      if (shouldSkipUpdate(ctx)) {
-        return;
-      }
+
+
+      
 
       const chatId = msg.chat.id;
       const isGroup = msg.chat.type === "group" || msg.chat.type === "supergroup";
