@@ -51,7 +51,7 @@ jobs:
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         with:
           with:
-  	  github-token: ${{ github.token }}
+  github-token: ${{ github.token }}
           script: |
             const association = context.payload.issue?.author_association;
             if (!association) {

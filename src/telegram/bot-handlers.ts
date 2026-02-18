@@ -830,7 +830,7 @@ try {
                   ts: new Date().toISOString(),
                   action: "touch",
                   note: presence:,
-                  meta: { sourceId: 	elegram: },
+                  meta: { sourceId: `telegram:${msg.message_id}` },
                 });
 
                 if (state.presence.state === "BRB") {
@@ -849,7 +849,7 @@ try {
                 await applyAffectionTrigger({
                   workspace: ws,
                   match,
-                  sourceId: 	elegram:,
+                  sourceId: `telegram:${msg.message_id}`,
                 });
 
                 const state = await loadOrInitState(ws);
