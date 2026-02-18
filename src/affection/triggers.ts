@@ -30,7 +30,6 @@ const PRAISE = [
   "based",
   "goated",
   "goat",
-  "w",
 ];
 
 const GRATITUDE = [
@@ -63,7 +62,6 @@ const INSULT = [
 ];
 
 const DISMISSIVE = [
-  "k",
   "ok",
   "whatever",
   "dont care",
