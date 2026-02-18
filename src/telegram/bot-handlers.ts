@@ -650,6 +650,42 @@ export const registerTelegramHandlers = ({
     }
   });
 
+  const bossTelegramUserId = String(process.env.OPENCLAW_BOSS_TELEGRAM_USER_ID ?? "8068585788");
+  const lockWatchKey = "__openvb3_lock_watch_v1";
+
+  async function notifyIfStaleSessionLock(reason: unknown) {
+    // Debounce: at most once every 10 minutes.
+    const now = Date.now();
+    const state = (globalThis as any)[lockWatchKey] as { nextAllowedAtMs?: number } | undefined;
+    const nextAllowedAtMs = state?.nextAllowedAtMs ?? 0;
+    if (now < nextAllowedAtMs) return;
+    (globalThis as any)[lockWatchKey] = { nextAllowedAtMs: now + 10 * 60_000 };
+
+    // Delay: most of these self-heal quickly.
+    setTimeout(async () => {
+      try {
+        const { findStaleSessionLocks, formatAge } = await import("../ops/session-locks.js");
+        const stale = await findStaleSessionLocks({ olderThanMs: 2 * 60_000 });
+        if (!stale.length) return;
+
+        const top = stale.slice(0, 3).map((l: any) => `- ${l.path} (age ${formatAge(l.ageMs)})`);
+        const text =
+          "Heads up: OpenClaw session lock looks stuck (>2m).\n" +
+          "This can cause replies to fail until it clears.\n\n" +
+          top.join("\n") +
+          "\n\nIf you need it immediately: run `openclaw gateway restart`.\n" +
+          `Reason seen: ${String(reason)}`;
+
+        const idNum = Number(bossTelegramUserId);
+        if (Number.isFinite(idNum) && (bot as any)?.telegram?.sendMessage) {
+          await (bot as any).telegram.sendMessage(idNum, text);
+        }
+      } catch {
+        // ignore
+      }
+    }, 2 * 60_000);
+  }
+
   bot.on("message", async (ctx) => {
     try {
       const msg = ctx.message;
@@ -1141,6 +1177,9 @@ if (msg.sticker && !media && !hasText) {
       });
     } catch (err) {
       runtime.error?.(danger(`handler failed: ${String(err)}`));
+      if (String(err).includes("session file locked")) {
+        void notifyIfStaleSessionLock(err);
+      }
     }
   });
 };
