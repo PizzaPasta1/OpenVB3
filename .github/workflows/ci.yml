@@ -6,6 +6,22 @@ on:
 
 jobs:
   install-check:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      macos: ${{ steps.filter.outputs.macos }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            macos:
+              - 'apps/macos/**'
+              - '.swiftlint.yml'
+              - '.swiftformat'
+              - '.github/workflows/ci.yml'
+
     runs-on: blacksmith-4vcpu-ubuntu-2404
     steps:
       - name: Checkout
@@ -341,8 +357,9 @@ jobs:
           NODE_OPTIONS: --max-old-space-size=4096
         run: ${{ matrix.command }}
 
-  macos-app:
-    if: github.event_name == 'pull_request'
+   macos-app:
+    needs: changes
+    if: github.event_name == 'pull_request' && needs.changes.outputs.macos == 'true'
     runs-on: macos-latest
     strategy:
       fail-fast: false

@@ -841,21 +841,7 @@ try {
                 return;
               }
 
-              const matches = detectTriggers({ text });
-		if (matches.length) {
-  			const match = matches[0];
-  			await applyAffectionTrigger({
-    			workspace: ws,
-    			match,
-    			sourceId: "telegram:" + String(msg.message_id),
- 		 });
-
-  		// Option A: nudge-only.
-  		// No immediate reply here; let the normal assistant response handle tone organically.
-		}
-
-              }
-            }
+              const matches = detectTriggers({ text }); if (matches.length) { const match = matches[0]; await applyAffectionTrigger({ workspace: ws, match, sourceId: "telegram:" + String(msg.message_id), }); /* nudge-only: no immediate reply here. */ }         }
           }
         }
       } catch {
