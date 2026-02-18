@@ -1,6 +1,15 @@
 ﻿import type { TriggerKind, TriggerMatch } from "./triggers";
-import { clamp01, clamp11 } from "../util/math.js";
 import type { AffectionStateV3b } from "./v3b-engine";
+
+function clamp01(n: number) {
+  if (Number.isNaN(n) || !Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(1, n));
+}
+
+function clamp11(n: number) {
+  if (Number.isNaN(n) || !Number.isFinite(n)) return 0;
+  return Math.max(-1, Math.min(1, n));
+}
 
 export type Delta = {
   closeness?: number;
