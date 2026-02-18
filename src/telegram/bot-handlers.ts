@@ -851,7 +851,7 @@ try {
                   sourceId: "telegram:" + String(msg.message_id),
                 });
 
-                // nudge-only: no immediate reply here.
+                /* nudge-only: no immediate reply here. */
               }
             }
           }
