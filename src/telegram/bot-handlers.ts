@@ -350,7 +350,7 @@ export const registerTelegramHandlers = ({
             });
           if (!allowed) {
             logVerbose(
-              `Blocked telegram group sender ${senderId || "unknown"} (group allowFrom override)`,
+`Blocked telegram group sender ${senderId || "unknown"} (group allowFrom override)`,
             );
             return;
           }
@@ -891,7 +891,7 @@ try {
             });
           if (!allowed) {
             logVerbose(
-              `Blocked telegram group sender ${senderId ?? "unknown"} (group allowFrom override)`,
+`Blocked telegram group sender ${senderId ?? "unknown"} (group allowFrom override)`,
             );
             return;
           }
