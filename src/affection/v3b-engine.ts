@@ -109,24 +109,37 @@ export async function loadOrInitState(workspace: string): Promise<AffectionState
     const parsed = JSON.parse(raw) as Partial<AffectionStateV3b>;
 
     const date = todayDate();
-    const today: AffectionToday =
-      parsed.today?.date === date
-        ? {
-            date,
-            affGain: Number(parsed.today?.affGain ?? 0),
-            negBudgetUsed: Number((parsed.today as any)?.negBudgetUsed ?? 0),
-          }
-        : { date, affGain: 0, negBudgetUsed: 0 };
+    const isSameDay = parsed.today?.date === date;
+    const today: AffectionToday = isSameDay
+      ? {
+          date,
+          affGain: Number(parsed.today?.affGain ?? 0),
+          negBudgetUsed: Number((parsed.today as any)?.negBudgetUsed ?? 0),
+        }
+      : { date, affGain: 0, negBudgetUsed: 0 };
 
     const closeness = clamp11(Number((parsed as any).closeness ?? 0));
     const trust = clamp11(Number((parsed as any).trust ?? 0));
+
+    let reliabilityTrust = clamp11(Number((parsed as any).reliabilityTrust ?? 0));
+    let irritation = clamp01(Number((parsed as any).irritation ?? 0));
+
+    // Daily decay: keep negatives from sticking forever.
+    // - irritation halves each new day
+    // - reliabilityTrust drifts toward 0 by 0.05 each new day
+    const didDailyRollover = !isSameDay;
+    if (didDailyRollover) {
+      irritation = clamp01(irritation * 0.5);
+      if (reliabilityTrust > 0) reliabilityTrust = clamp11(reliabilityTrust - 0.05);
+      else if (reliabilityTrust < 0) reliabilityTrust = clamp11(reliabilityTrust + 0.05);
+    }
 
     const state: AffectionStateV3b = {
       version: "v3b",
       closeness,
       trust,
-      reliabilityTrust: clamp11(Number((parsed as any).reliabilityTrust ?? 0)),
-      irritation: clamp01(Number((parsed as any).irritation ?? 0)),
+      reliabilityTrust,
+      irritation,
       aff: 0, // computed below
       label: "NORMAL", // computed below
       presence: {
@@ -144,6 +157,21 @@ export async function loadOrInitState(workspace: string): Promise<AffectionState
 
     state.aff = computeAff({ closeness: state.closeness, trust: state.trust });
     state.label = labelForAff(state.aff);
+
+    if (didDailyRollover) {
+      // Persist the decay + daily reset the first time we notice a new day.
+      // This keeps state stable across subsequent loads.
+      await saveState(workspace, state);
+      await appendAudit(workspace, {
+        ts: isoNow(),
+        action: "touch",
+        note: "daily-decay",
+        deltas: {
+          reliabilityTrust: state.reliabilityTrust - clamp11(Number((parsed as any).reliabilityTrust ?? 0)),
+          irritation: state.irritation - clamp01(Number((parsed as any).irritation ?? 0)),
+        },
+      });
+    }
 
     return state;
   } catch {
