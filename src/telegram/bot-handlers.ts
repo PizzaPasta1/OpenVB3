@@ -905,7 +905,31 @@ try {
                 return;
               }
 
-              const matches = detectTriggers({ text }); if (matches.length) { const match = matches[0]; await applyAffectionTrigger({ workspace: ws, match, sourceId: "telegram:" + String(msg.message_id), }); /* nudge-only: no immediate reply here. */ }         }
+              // If you're BRB/AFK/AWAY, freeze passive affection nudges.
+              const stateForPresence = await loadOrInitState(ws);
+              const presenceState = stateForPresence.presence?.state ?? "ACTIVE";
+              if (presenceState === "ACTIVE") {
+                const matches = detectTriggers({ text });
+                if (matches.length) {
+                  const match = matches[0];
+                  await applyAffectionTrigger({
+                    workspace: ws,
+                    match,
+                    sourceId: "telegram:" + String(msg.message_id),
+                  });
+                  /* nudge-only: no immediate reply here. */
+                }
+              } else {
+                // Optional: leave a breadcrumb for tuning/debugging.
+                await appendAudit(ws, {
+                  ts: new Date().toISOString(),
+                  action: "touch",
+                  note: `trigger-skipped:presence=${presenceState}`,
+                  meta: { sourceId: "telegram:" + String(msg.message_id) },
+                });
+              }
+            }
+
           }
         }
       } catch {
