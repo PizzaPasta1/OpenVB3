@@ -388,6 +388,15 @@ importers:
 
   extensions/open-prose: {}
 
+  extensions/openvb3-affection:
+    devDependencies:
+      openclaw:
+        specifier: workspace:*
+        version: link:../..
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+
   extensions/signal: {}
 
   extensions/slack: {}
