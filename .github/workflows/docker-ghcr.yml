@@ -18,6 +18,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Compute GHCR namespace
+        shell: bash
+        run: |
+          echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_ENV"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -35,7 +40,7 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ toLower(github.repository_owner) }}/openvb3:option-b
-            ghcr.io/${{ toLower(github.repository_owner) }}/openvb3:option-b-${{ github.sha }}
+            ghcr.io/${{ env.OWNER_LC }}/openvb3:option-b
+            ghcr.io/${{ env.OWNER_LC }}/openvb3:option-b-${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
