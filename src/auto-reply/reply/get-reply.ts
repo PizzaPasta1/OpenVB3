@@ -278,7 +278,6 @@ export async function getReplyFromConfig(
   provider = resolvedProvider;
   model = resolvedModel;
 
-<<<<<<< HEAD
   const maybeEmitMissingResetHooks = async () => {
     if (!resetTriggered || !command.isAuthorizedSender || command.resetHookTriggered) {
       return;
@@ -300,8 +299,7 @@ export async function getReplyFromConfig(
     });
   };
 
-=======
->>>>>>> 1afc49571 (feat: add telegram animated media previews (thumb + contact + frames))
+ await maybeEmitMissingResetHooks();
   const inlineActionResult = await handleInlineActions({
     ctx,
     sessionCtx,
@@ -341,17 +339,11 @@ export async function getReplyFromConfig(
     skillFilter: mergedSkillFilter,
   });
   if (inlineActionResult.kind === "reply") {
-<<<<<<< HEAD
-    await maybeEmitMissingResetHooks();
-    return inlineActionResult.reply;
-  }
-  await maybeEmitMissingResetHooks();
-=======
-    return inlineActionResult.reply;
-  }
->>>>>>> 1afc49571 (feat: add telegram animated media previews (thumb + contact + frames))
-  directives = inlineActionResult.directives;
-  abortedLastRun = inlineActionResult.abortedLastRun ?? abortedLastRun;
+  return inlineActionResult.reply;
+}
+
+directives = inlineActionResult.directives;
+abortedLastRun = inlineActionResult.abortedLastRun ?? abortedLastRun;
 
   await stageSandboxMedia({
     ctx,
