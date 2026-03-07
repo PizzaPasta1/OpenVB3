@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   docs-scope:
-    runs-on: runs-on: ubuntu-latest
+    runs-on: ubuntu-latest
     outputs:
       docs_only: ${{ steps.check.outputs.docs_only }}
     steps:
